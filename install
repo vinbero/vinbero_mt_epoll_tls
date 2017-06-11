@@ -1,0 +1,2 @@
+sudo mkdir -p /usr/local/lib/tucube
+sudo gcc src/tucube_epoll_tls.c -o /usr/local/lib/tucube/tucube_epoll_tls.so -std=gnu99 -fPIC -shared -g -l gon_http_parser -Wl,-rpath,/usr/local/lib
