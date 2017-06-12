@@ -39,6 +39,7 @@ int tucube_IBase_init(struct tucube_Module_Config* moduleConfig, struct tucube_M
     TUCUBE_MODULE_DLOPEN(module, moduleConfig);
     TUCUBE_IBASE_DLSYM(module, struct tucube_epoll_tls_Module);
     TUCUBE_ICLOCAL_DLSYM(module, struct tucube_epoll_tls_Module);
+    TUCUBE_ICLSERVICE_DLSYM(module, struct tucube_epoll_tls_Module);
 
     GON_C_LIST_APPEND(moduleList, module);
 
@@ -71,7 +72,7 @@ int tucube_IClService_call(struct tucube_Module* module, struct tucube_ClData* c
 
 int tucube_ICLocal_destroy(struct tucube_Module* module, struct tucube_ClData* clData) {
 #define TUCUBE_LOCAL_MODULE GON_C_CAST(module->pointer, struct tucube_epoll_tls_Module*)
-    return TUCUBE_LOCAL_MODULE->tucube_ICLocal_destroy(GON_C_LIST_ELEMENT_NEXT(module), GON_C_LIST_ELEMENT_NEXT(clData));
+    return TUCUBE_LOCAL_MODULE->tucube_ICLocal_destroy(GON_C_LIST_ELEMENT_NEXT(module), clData);
 #undef TUCUBE_LOCAL_MODULE
 }
 
