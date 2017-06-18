@@ -1,0 +1,10 @@
+SSL_read(ssl, data, size); 
+SSL_write(ssl, data, size);
+#define TUCUBE_GENERIC_OBJECT \
+union {                       \
+    void* pointer;            \
+    int integer;              \
+    unsigned int uInteger;    \
+}
+tucube_genericRead(TUCUBE_GENERIC_OBJECT object, char* buffer, size_t size);
+tucube_genericWrite(TUCUBE_GENERIC_OBJECT object, char* buffer, size_t size);
