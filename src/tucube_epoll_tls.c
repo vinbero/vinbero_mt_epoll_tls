@@ -81,6 +81,14 @@ int tucube_IBase_tlInit(struct tucube_Module* module, struct tucube_Module_Confi
 #undef TUCUBE_LOCAL_MODULE
 }
 
+static int tucube_epoll_tls_Ssl_read(struct gaio_Io* io, void* buffer, int readSize) {
+    return SSL_read((SSL*)io->object.pointer, buffer, readSize);
+}
+
+static int tucube_epoll_tls_Ssl_write(struct gaio_Io* io, void* buffer, int writeSize) {
+    return SSL_write((SSL*)io->object.pointer, buffer, writeSize);
+}
+
 int tucube_ICLocal_init(struct tucube_Module* module, struct tucube_ClData_List* clDataList, void* args[]) {
 #define TUCUBE_LOCAL_MODULE GENC_CAST(module->generic.pointer, struct tucube_epoll_tls_Module*)
 #define TUCUBE_LOCAL_CLIENT_SOCKET ((int*)args[0])
@@ -139,26 +147,20 @@ int tucube_ICLocal_init(struct tucube_Module* module, struct tucube_ClData_List*
     warnx("accept success!!");
 return -1;
     GENC_LIST_APPEND(clDataList, clData);
-    return TUCUBE_LOCAL_MODULE->tucube_ICLocal_init(GENC_LIST_ELEMENT_NEXT(module), clDataList, args);
+struct gaio_Io io = {.object.pointer = TUCUBE_LOCAL_CLDATA->ssl, .read = tucube_epoll_tls_Ssl_read, .write = tucube_epoll_tls_Ssl_write, .close = gaio_Nop_close};
+
+    return TUCUBE_LOCAL_MODULE->tucube_ICLocal_init(GENC_LIST_ELEMENT_NEXT(module), clDataList, (void*[]){&io, NULL});
 #undef TUCUBE_LOCAL_CLDATA
 #undef TUCUBE_LOCAL_CLIENT_SOCKET
 #undef TUCUBE_LOCAL_MODULE
 }
 
-static int tucube_epoll_tls_ssl_read(union genc_Generic object, void* buffer, int readSize) {
-    return SSL_read((SSL*)object.pointer, buffer, readSize);
-}
-
-static int tucube_epoll_tls_ssl_write(union genc_Generic object, void* buffer, int writeSize) {
-    return SSL_write((SSL*)object.pointer, buffer, writeSize);
-}
 
 
 int tucube_IClService_call(struct tucube_Module* module, struct tucube_ClData* clData, void* args[]) {
 #define TUCUBE_LOCAL_MODULE GENC_CAST(module->generic.pointer, struct tucube_epoll_tls_Module*)
 #define TUCUBE_LOCAL_CLDATA GENC_CAST(clData->generic.pointer, struct tucube_epoll_tls_ClData*)
-    struct gaio_Io io = {.object.pointer = TUCUBE_LOCAL_CLDATA->ssl, .read = tucube_epoll_tls_ssl_read, .write = tucube_epoll_tls_ssl_write, .close = gaio_nop_close};
-    return TUCUBE_LOCAL_MODULE->tucube_IClService_call(GENC_LIST_ELEMENT_NEXT(module), clData, (void*[]){&io, NULL});
+    return TUCUBE_LOCAL_MODULE->tucube_IClService_call(GENC_LIST_ELEMENT_NEXT(module), clData, (void*[]){NULL});
 #undef TUCUBE_LOCAL_CLDATA
 #undef TUCUBE_LOCAL_MODULE
 }
