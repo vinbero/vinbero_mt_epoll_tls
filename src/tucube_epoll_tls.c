@@ -99,6 +99,10 @@ static int tucube_epoll_tls_Ssl_fcntl(struct gaio_Io* io, int command, int argCo
     return returnValue;
 }
 
+static int tucube_epoll_tls_Ssl_close(struct gaio_Io* io) {
+    return SSL_shutdown((SSL*)io->object.pointer);
+}
+
 int tucube_ICLocal_init(struct tucube_Module* module, struct tucube_ClData_List* clDataList, void* args[]) {
 #define TUCUBE_LOCAL_MODULE GENC_CAST(module->generic.pointer, struct tucube_epoll_tls_Module*)
 #define TUCUBE_LOCAL_FD_POINTER_CLIENT_IO ((struct gaio_Io*)args[0])
@@ -163,7 +167,7 @@ int tucube_ICLocal_init(struct tucube_Module* module, struct tucube_ClData_List*
     io->write = tucube_epoll_tls_Ssl_write;
     io->fcntl = tucube_epoll_tls_Ssl_fcntl;
     //io->sendfile =
-    io->close = gaio_Nop_close;
+    io->close = tucube_epoll_tls_Ssl_close;
     return TUCUBE_LOCAL_MODULE->tucube_ICLocal_init(GENC_LIST_ELEMENT_NEXT(module), clDataList, (void*[]){io, NULL});
 #undef TUCUBE_LOCAL_CLDATA
 #undef TUCUBE_LOCAL_FD_POINTER_CLIENT_IO
