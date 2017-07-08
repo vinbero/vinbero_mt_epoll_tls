@@ -161,7 +161,7 @@ int tucube_ICLocal_init(struct tucube_Module* module, struct tucube_ClData_List*
 
 
     GENC_LIST_APPEND(clDataList, clData);
-    struct gaio_Io* io = malloc(sizeof(struct gaio_Io*));
+    struct gaio_Io* io = malloc(sizeof(struct gaio_Io));
     io->object.pointer = TUCUBE_LOCAL_CLDATA->ssl;
     io->read = tucube_epoll_tls_Ssl_read;
     io->write = tucube_epoll_tls_Ssl_write;
