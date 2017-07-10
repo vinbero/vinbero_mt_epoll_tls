@@ -117,49 +117,6 @@ int tucube_ICLocal_init(struct tucube_Module* module, struct tucube_ClData_List*
 	return -1;
     }
 
-//    SSL_set_accept_state(TUCUBE_LOCAL_CLDATA->ssl);
-//    if((result = SSL_do_handshake(TUCUBE_LOCAL_CLDATA->ssl)) != 1) {
-    int result;
-    TUCUBE_LOCAL_FD_POINTER_CLIENT_IO->fcntl(TUCUBE_LOCAL_FD_POINTER_CLIENT_IO, F_SETFL, TUCUBE_LOCAL_FD_POINTER_CLIENT_IO->fcntl(TUCUBE_LOCAL_FD_POINTER_CLIENT_IO, F_GETFL, 0) & ~O_NONBLOCK);
-
-    if((result = SSL_accept(TUCUBE_LOCAL_CLDATA->ssl)) != 1) {
-        switch(SSL_get_error(TUCUBE_LOCAL_CLDATA->ssl, result)) {
-            case SSL_ERROR_NONE:
-	        warnx("%s: %u: SSL_ERROR_NONE", __FILE__, __LINE__);
-		break;
-	    case SSL_ERROR_WANT_WRITE:
-	        warnx("%s: %u: SSL_ERROR_WANT_WRITE", __FILE__, __LINE__);
-		break;
-	    case SSL_ERROR_WANT_READ:
-	        warnx("%s: %u: SSL_ERROR_WANT_READ", __FILE__, __LINE__);
-		break;
-	    case SSL_ERROR_ZERO_RETURN:
-	        warnx("%s: %u: SSL_ERROR_ZERO_RETURN", __FILE__, __LINE__);
-		break;
-	    case SSL_ERROR_SYSCALL:
-	        warnx("%s: %u: SSL_ERROR_SYSCALL", __FILE__, __LINE__);
-		break;
-            case SSL_ERROR_WANT_CONNECT:
-		warnx("%s: %u: SSL_ERROR_WANT_CONNET", __FILE__, __LINE__);
-		break;
-	    case SSL_ERROR_WANT_ACCEPT:
-		warnx("%s: %u: SSL_ERROR_WANT_ACCEPT", __FILE__, __LINE__);
-		break;
-	    case SSL_ERROR_WANT_X509_LOOKUP:
-		warnx("%s: %u: SSL_ERROR_WANT_X509_LOOKUP", __FILE__, __LINE__);
-		break;
-	    case SSL_ERROR_SSL:
-		warnx("%s: %u: SSL_ERROR_SSL", __FILE__, __LINE__);
-		break;
-	    default:
-	        warnx("SSL_ERROR_???");
-		break;
-        }
-        return -1;
-    }
-    TUCUBE_LOCAL_FD_POINTER_CLIENT_IO->fcntl(TUCUBE_LOCAL_FD_POINTER_CLIENT_IO, F_SETFL, TUCUBE_LOCAL_FD_POINTER_CLIENT_IO->fcntl(TUCUBE_LOCAL_FD_POINTER_CLIENT_IO, F_GETFL, 0) | O_NONBLOCK);
-
-
     GENC_LIST_APPEND(clDataList, clData);
     struct gaio_Io* io = malloc(sizeof(struct gaio_Io));
     io->object.pointer = TUCUBE_LOCAL_CLDATA->ssl;
@@ -180,7 +137,48 @@ int tucube_IClService_call(struct tucube_Module* module, struct tucube_ClData* c
 #define TUCUBE_LOCAL_MODULE GENC_CAST(module->generic.pointer, struct tucube_epoll_tls_Module*)
 #define TUCUBE_LOCAL_CLDATA GENC_CAST(clData->generic.pointer, struct tucube_epoll_tls_ClData*)
     warnx("%s: %u: %s", __FILE__, __LINE__, __FUNCTION__);
-    return TUCUBE_LOCAL_MODULE->tucube_IClService_call(GENC_LIST_ELEMENT_NEXT(module), GENC_LIST_ELEMENT_NEXT(clData), (void*[]){NULL});
+
+    if(SSL_is_init_finished(TUCUBE_LOCAL_CLDATA->ssl))
+        return TUCUBE_LOCAL_MODULE->tucube_IClService_call(GENC_LIST_ELEMENT_NEXT(module), GENC_LIST_ELEMENT_NEXT(clData), (void*[]){NULL});
+
+    int result;
+    if((result = SSL_accept(TUCUBE_LOCAL_CLDATA->ssl)) != 1) {
+        switch(SSL_get_error(TUCUBE_LOCAL_CLDATA->ssl, result)) {
+            case SSL_ERROR_NONE:
+	        warnx("%s: %u: SSL_ERROR_NONE", __FILE__, __LINE__);
+		break;
+	    case SSL_ERROR_WANT_WRITE:
+	        warnx("%s: %u: SSL_ERROR_WANT_WRITE", __FILE__, __LINE__);
+		return 1;
+	    case SSL_ERROR_WANT_READ:
+	        warnx("%s: %u: SSL_ERROR_WANT_READ", __FILE__, __LINE__);
+		return 1;
+	    case SSL_ERROR_ZERO_RETURN:
+	        warnx("%s: %u: SSL_ERROR_ZERO_RETURN", __FILE__, __LINE__);
+		break;
+	    case SSL_ERROR_SYSCALL:
+	        warnx("%s: %u: SSL_ERROR_SYSCALL", __FILE__, __LINE__);
+		break;
+            case SSL_ERROR_WANT_CONNECT:
+		warnx("%s: %u: SSL_ERROR_WANT_CONNET", __FILE__, __LINE__);
+		break;
+	    case SSL_ERROR_WANT_ACCEPT:
+		warnx("%s: %u: SSL_ERROR_WANT_ACCEPT", __FILE__, __LINE__);
+		break;
+	    case SSL_ERROR_WANT_X509_LOOKUP:
+		warnx("%s: %u: SSL_ERROR_WANT_X509_LOOKUP", __FILE__, __LINE__);
+		break;
+	    case SSL_ERROR_SSL:
+		warnx("%s: %u: SSL_ERROR_SSL", __FILE__, __LINE__);
+		break;
+	    default:
+	        warnx("%s: %u: SSL_ERROR_???", __FILE__, __LINE__);
+		break;
+        }
+	warnx("%s: %u: SSL_accept() failed", __FILE__, __LINE__);
+        return -1;
+    }
+
 #undef TUCUBE_LOCAL_CLDATA
 #undef TUCUBE_LOCAL_MODULE
 }
