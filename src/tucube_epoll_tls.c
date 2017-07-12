@@ -57,11 +57,27 @@ int tucube_IBase_init(struct tucube_Module_Config* moduleConfig, struct tucube_M
 
     TUCUBE_LOCAL_MODULE->sslContext = SSL_CTX_new(SSLv23_server_method());
     SSL_CTX_set_ecdh_auto(TUCUBE_LOCAL_MODULE->sslContext, 1);
-    if(SSL_CTX_use_certificate_file(TUCUBE_LOCAL_MODULE->sslContext, "cert.pem", SSL_FILETYPE_PEM) <= 0) {
+
+    const char* certificateFile;
+    const char* privateKeyFile;
+
+    if(json_object_get(json_array_get(moduleConfig->json, 1), "tucube_epoll_tls.certificateFile") != NULL) {
+        certificateFile = json_string_value(json_object_get(json_array_get(moduleConfig->json, 1), "tucube_epoll_tls.certificateFile"));
+    } else {
+        errx(EXIT_FAILURE, "%s: %u: Configuration argument tucube_epoll_tls.certificateFile is required");
+    }
+
+    if(json_object_get(json_array_get(moduleConfig->json, 1), "tucube_epoll_tls.privateKeyFile") != NULL) {
+        privateKeyFile = json_string_value(json_object_get(json_array_get(moduleConfig->json, 1), "tucube_epoll_tls.privateKeyFile"));
+    } else {
+        errx(EXIT_FAILURE, "%s: %u: Configuration argument tucube_epoll_tls.privateKeyFile is required");
+    }
+ 
+    if(SSL_CTX_use_certificate_file(TUCUBE_LOCAL_MODULE->sslContext, certificateFile, SSL_FILETYPE_PEM) <= 0) {
         ERR_print_errors_fp(stderr);
         exit(EXIT_FAILURE);
     }
-    if(SSL_CTX_use_PrivateKey_file(TUCUBE_LOCAL_MODULE->sslContext, "key.pem", SSL_FILETYPE_PEM) <= 0 ) {
+    if(SSL_CTX_use_PrivateKey_file(TUCUBE_LOCAL_MODULE->sslContext, privateKeyFile, SSL_FILETYPE_PEM) <= 0 ) {
         ERR_print_errors_fp(stderr);
         exit(EXIT_FAILURE);
     }
@@ -99,6 +115,10 @@ static int tucube_epoll_tls_Ssl_fcntl(struct gaio_Io* io, int command, int argCo
     return returnValue;
 }
 
+static int tucube_epoll_tls_Ssl_fileno(struct gaio_Io* io) {
+    return SSL_get_fd((SSL*)io->object.pointer);
+}
+
 static int tucube_epoll_tls_Ssl_close(struct gaio_Io* io) {
     return SSL_shutdown((SSL*)io->object.pointer);
 }
@@ -122,16 +142,15 @@ int tucube_ICLocal_init(struct tucube_Module* module, struct tucube_ClData_List*
     io->object.pointer = TUCUBE_LOCAL_CLDATA->ssl;
     io->read = tucube_epoll_tls_Ssl_read;
     io->write = tucube_epoll_tls_Ssl_write;
+    io->sendfile = gaio_Generic_sendfile;
     io->fcntl = tucube_epoll_tls_Ssl_fcntl;
-    //io->sendfile =
+    io->fileno = tucube_epoll_tls_Ssl_fileno;
     io->close = tucube_epoll_tls_Ssl_close;
     return TUCUBE_LOCAL_MODULE->tucube_ICLocal_init(GENC_LIST_ELEMENT_NEXT(module), clDataList, (void*[]){io, NULL});
 #undef TUCUBE_LOCAL_CLDATA
 #undef TUCUBE_LOCAL_FD_POINTER_CLIENT_IO
 #undef TUCUBE_LOCAL_MODULE
 }
-
-
 
 int tucube_IClService_call(struct tucube_Module* module, struct tucube_ClData* clData, void* args[]) {
 #define TUCUBE_LOCAL_MODULE GENC_CAST(module->generic.pointer, struct tucube_epoll_tls_Module*)
