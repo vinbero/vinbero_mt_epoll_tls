@@ -59,30 +59,36 @@ int tucube_IBase_init(struct tucube_Module_Config* moduleConfig, struct tucube_M
     TUCUBE_LOCAL_MODULE->sslContext = SSL_CTX_new(SSLv23_server_method());
     SSL_CTX_set_ecdh_auto(TUCUBE_LOCAL_MODULE->sslContext, 1);
 
-    const char* certificateFile;
-    const char* privateKeyFile;
+    char* certificateFile;
+    char* privateKeyFile;
 
     if(json_object_get(json_array_get(moduleConfig->json, 1), "tucube_epoll_tls.certificateFile") != NULL) {
-        certificateFile = json_string_value(json_object_get(json_array_get(moduleConfig->json, 1), "tucube_epoll_tls.certificateFile"));
+        if((certificateFile = realpath(json_string_value(json_object_get(json_array_get(moduleConfig->json, 1), "tucube_epoll_tls.certificateFile")), NULL)) == NULL)
+            err(EXIT_FAILURE, "%s: %u: ", __FILE__, __LINE__);
     } else {
-        errx(EXIT_FAILURE, "%s: %u: Configuration argument tucube_epoll_tls.certificateFile is required");
+        errx(EXIT_FAILURE, "%s: %u: Configuration argument tucube_epoll_tls.certificateFile is required", __FILE__, __LINE__);
     }
 
     if(json_object_get(json_array_get(moduleConfig->json, 1), "tucube_epoll_tls.privateKeyFile") != NULL) {
-        privateKeyFile = json_string_value(json_object_get(json_array_get(moduleConfig->json, 1), "tucube_epoll_tls.privateKeyFile"));
+        if((privateKeyFile = realpath(json_string_value(json_object_get(json_array_get(moduleConfig->json, 1), "tucube_epoll_tls.privateKeyFile")), NULL)) == NULL)
+            err(EXIT_FAILURE, "%s: %u: ", __FILE__, __LINE__);
     } else {
-        errx(EXIT_FAILURE, "%s: %u: Configuration argument tucube_epoll_tls.privateKeyFile is required");
+        errx(EXIT_FAILURE, "%s: %u: Configuration argument tucube_epoll_tls.privateKeyFile is required", __FILE__, __LINE__);
     }
  
     if(SSL_CTX_use_certificate_file(TUCUBE_LOCAL_MODULE->sslContext, certificateFile, SSL_FILETYPE_PEM) <= 0) {
+        free(certificateFile);
         ERR_print_errors_fp(stderr);
         exit(EXIT_FAILURE);
     }
-    if(SSL_CTX_use_PrivateKey_file(TUCUBE_LOCAL_MODULE->sslContext, privateKeyFile, SSL_FILETYPE_PEM) <= 0 ) {
+    if(SSL_CTX_use_PrivateKey_file(TUCUBE_LOCAL_MODULE->sslContext, privateKeyFile, SSL_FILETYPE_PEM) <= 0) {
+        free(privateKeyFile);
         ERR_print_errors_fp(stderr);
         exit(EXIT_FAILURE);
     }
 
+    free(certificateFile);
+    free(privateKeyFile);
 
     GENC_LIST_APPEND(moduleList, module);
 
@@ -121,7 +127,8 @@ static int tucube_epoll_tls_Ssl_fileno(struct gaio_Io* io) {
 }
 
 static int tucube_epoll_tls_Ssl_close(struct gaio_Io* io) {
-//    SSL_shutdown((SSL*)io->object.pointer); this is just an unidirectional close
+    SSL_shutdown((SSL*)io->object.pointer); 
+    SSL_shutdown((SSL*)io->object.pointer);
     return close(io->fileno(io));
 }
 
