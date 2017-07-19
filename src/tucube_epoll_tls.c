@@ -114,6 +114,16 @@ static int tucube_epoll_tls_Ssl_write(struct gaio_Io* io, void* buffer, int writ
     return SSL_write((SSL*)io->object.pointer, buffer, writeSize);
 }
 
+static int tucube_epoll_tls_Ssl_sendfile(struct gaio_Io* outIo, struct gaio_Io* inIo, int* offset, int count) {
+    outIo->fcntl(outIo, F_SETFL, outIo->fcntl(outIo, F_GETFL, 0) & ~O_NONBLOCK);
+    char* buffer = malloc(count);
+    inIo->read(inIo, buffer, count);
+    outIo->write(outIo, buffer, count);
+    free(buffer);
+    outIo->fcntl(outIo, F_SETFL, outIo->fcntl(outIo, F_GETFL, 0) | O_NONBLOCK);
+    return count;
+}
+
 static int tucube_epoll_tls_Ssl_fcntl(struct gaio_Io* io, int command, int argCount, ...) {
     va_list args;
     va_start(args, argCount);
@@ -149,7 +159,7 @@ int tucube_ICLocal_init(struct tucube_Module* module, struct tucube_ClData_List*
     TUCUBE_LOCAL_CLDATA->clientIo.object.pointer = TUCUBE_LOCAL_CLDATA->ssl;
     TUCUBE_LOCAL_CLDATA->clientIo.read = tucube_epoll_tls_Ssl_read;
     TUCUBE_LOCAL_CLDATA->clientIo.write = tucube_epoll_tls_Ssl_write;
-    TUCUBE_LOCAL_CLDATA->clientIo.sendfile = gaio_Generic_sendfile;
+    TUCUBE_LOCAL_CLDATA->clientIo.sendfile = tucube_epoll_tls_Ssl_sendfile;
     TUCUBE_LOCAL_CLDATA->clientIo.fcntl = tucube_epoll_tls_Ssl_fcntl;
     TUCUBE_LOCAL_CLDATA->clientIo.fileno = tucube_epoll_tls_Ssl_fileno;
     TUCUBE_LOCAL_CLDATA->clientIo.close = tucube_epoll_tls_Ssl_close;
