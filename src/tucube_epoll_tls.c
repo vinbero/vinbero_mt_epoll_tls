@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/sendfile.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <gon_http_parser.h>
 #include <tucube/tucube_Module.h>
@@ -132,6 +133,10 @@ static int tucube_epoll_tls_Ssl_fcntl(struct gaio_Io* io, int command, int argCo
     return returnValue;
 }
 
+static int tucube_epoll_tls_Ssl_fstat(struct gaio_Io* io, struct stat* statBuffer) {
+    return fstat(SSL_get_fd((SSL*)io->object.pointer), statBuffer);
+}
+
 static int tucube_epoll_tls_Ssl_fileno(struct gaio_Io* io) {
     return SSL_get_fd((SSL*)io->object.pointer);
 }
@@ -139,7 +144,7 @@ static int tucube_epoll_tls_Ssl_fileno(struct gaio_Io* io) {
 static int tucube_epoll_tls_Ssl_close(struct gaio_Io* io) {
     SSL_shutdown((SSL*)io->object.pointer); 
     SSL_shutdown((SSL*)io->object.pointer);
-    return close(io->fileno(io));
+    return close(SSL_get_fd((SSL*)io->object.pointer));
 }
 
 int tucube_ICLocal_init(struct tucube_Module* module, struct tucube_ClData_List* clDataList, void* args[]) {
@@ -161,6 +166,7 @@ int tucube_ICLocal_init(struct tucube_Module* module, struct tucube_ClData_List*
     TUCUBE_LOCAL_CLDATA->clientIo.write = tucube_epoll_tls_Ssl_write;
     TUCUBE_LOCAL_CLDATA->clientIo.sendfile = tucube_epoll_tls_Ssl_sendfile;
     TUCUBE_LOCAL_CLDATA->clientIo.fcntl = tucube_epoll_tls_Ssl_fcntl;
+    TUCUBE_LOCAL_CLDATA->clientIo.fstat = tucube_epoll_tls_Ssl_fstat;
     TUCUBE_LOCAL_CLDATA->clientIo.fileno = tucube_epoll_tls_Ssl_fileno;
     TUCUBE_LOCAL_CLDATA->clientIo.close = tucube_epoll_tls_Ssl_close;
     return TUCUBE_LOCAL_MODULE->tucube_ICLocal_init(GENC_LIST_ELEMENT_NEXT(module), clDataList, (void*[]){&TUCUBE_LOCAL_CLDATA->clientIo, NULL});
