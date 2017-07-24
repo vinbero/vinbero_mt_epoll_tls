@@ -26,6 +26,7 @@ struct tucube_epoll_tls_Module {
     TUCUBE_ICLOCAL_FUNCTION_POINTERS;
     TUCUBE_ICLSERVICE_FUNCTION_POINTERS;
     SSL_CTX* sslContext;
+    struct gaio_Io_Callbacks ioCallbacks;
 };
 
 TUCUBE_IBASE_FUNCTIONS;
@@ -37,13 +38,52 @@ struct tucube_epoll_tls_ClData {
     struct gaio_Io clientIo;
 };
 
+static int tucube_epoll_tls_Ssl_read(struct gaio_Io* io, void* buffer, int readSize) {
+    return SSL_read((SSL*)io->object.pointer, buffer, readSize);
+}
+
+static int tucube_epoll_tls_Ssl_write(struct gaio_Io* io, void* buffer, int writeSize) {
+    return SSL_write((SSL*)io->object.pointer, buffer, writeSize);
+}
+
+static int tucube_epoll_tls_Ssl_sendfile(struct gaio_Io* outIo, struct gaio_Io* inIo, int* offset, int count) {
+    outIo->callbacks->fcntl(outIo, F_SETFL, outIo->callbacks->fcntl(outIo, F_GETFL, 0) & ~O_NONBLOCK);
+    char* buffer = malloc(count);
+    inIo->callbacks->read(inIo, buffer, count);
+    outIo->callbacks->write(outIo, buffer, count);
+    free(buffer);
+    outIo->callbacks->fcntl(outIo, F_SETFL, outIo->callbacks->fcntl(outIo, F_GETFL, 0) | O_NONBLOCK);
+    return count;
+}
+
+static int tucube_epoll_tls_Ssl_fcntl(struct gaio_Io* io, int command, int argCount, ...) {
+    va_list args;
+    va_start(args, argCount);
+    int returnValue = fcntl(SSL_get_fd((SSL*)io->object.pointer), command, argCount, args);
+    va_end(args);
+    return returnValue;
+}
+
+static int tucube_epoll_tls_Ssl_fstat(struct gaio_Io* io, struct stat* statBuffer) {
+    return fstat(SSL_get_fd((SSL*)io->object.pointer), statBuffer);
+}
+
+static int tucube_epoll_tls_Ssl_fileno(struct gaio_Io* io) {
+    return SSL_get_fd((SSL*)io->object.pointer);
+}
+
+static int tucube_epoll_tls_Ssl_close(struct gaio_Io* io) {
+    SSL_shutdown((SSL*)io->object.pointer); 
+    SSL_shutdown((SSL*)io->object.pointer);
+    return close(SSL_get_fd((SSL*)io->object.pointer));
+}
+
 int tucube_IBase_init(struct tucube_Module_Config* moduleConfig, struct tucube_Module_List* moduleList, void* args[]) {
 #define TUCUBE_LOCAL_MODULE GENC_CAST(module->generic.pointer, struct tucube_epoll_tls_Module*)
     warnx("%s: %u: %s", __FILE__, __LINE__, __FUNCTION__);
     SSL_load_error_strings();	
     ERR_load_crypto_strings();
     OpenSSL_add_ssl_algorithms();
-
 
     if(GENC_LIST_ELEMENT_NEXT(moduleConfig) == NULL)
         errx(EXIT_FAILURE, "tucube_epoll_tls requires another module");
@@ -91,6 +131,14 @@ int tucube_IBase_init(struct tucube_Module_Config* moduleConfig, struct tucube_M
     free(certificateFile);
     free(privateKeyFile);
 
+    TUCUBE_LOCAL_MODULE->ioCallbacks.read = tucube_epoll_tls_Ssl_read;
+    TUCUBE_LOCAL_MODULE->ioCallbacks.write = tucube_epoll_tls_Ssl_write;
+    TUCUBE_LOCAL_MODULE->ioCallbacks.sendfile = tucube_epoll_tls_Ssl_sendfile;
+    TUCUBE_LOCAL_MODULE->ioCallbacks.fcntl = tucube_epoll_tls_Ssl_fcntl;
+    TUCUBE_LOCAL_MODULE->ioCallbacks.fstat = tucube_epoll_tls_Ssl_fstat;
+    TUCUBE_LOCAL_MODULE->ioCallbacks.fileno = tucube_epoll_tls_Ssl_fileno;
+    TUCUBE_LOCAL_MODULE->ioCallbacks.close = tucube_epoll_tls_Ssl_close;
+
     GENC_LIST_APPEND(moduleList, module);
 
     if(TUCUBE_LOCAL_MODULE->tucube_IBase_init(GENC_LIST_ELEMENT_NEXT(moduleConfig), moduleList, (void*[]){NULL}) == -1)
@@ -107,45 +155,7 @@ int tucube_IBase_tlInit(struct tucube_Module* module, struct tucube_Module_Confi
 #undef TUCUBE_LOCAL_MODULE
 }
 
-static int tucube_epoll_tls_Ssl_read(struct gaio_Io* io, void* buffer, int readSize) {
-    return SSL_read((SSL*)io->object.pointer, buffer, readSize);
-}
 
-static int tucube_epoll_tls_Ssl_write(struct gaio_Io* io, void* buffer, int writeSize) {
-    return SSL_write((SSL*)io->object.pointer, buffer, writeSize);
-}
-
-static int tucube_epoll_tls_Ssl_sendfile(struct gaio_Io* outIo, struct gaio_Io* inIo, int* offset, int count) {
-    outIo->fcntl(outIo, F_SETFL, outIo->fcntl(outIo, F_GETFL, 0) & ~O_NONBLOCK);
-    char* buffer = malloc(count);
-    inIo->read(inIo, buffer, count);
-    outIo->write(outIo, buffer, count);
-    free(buffer);
-    outIo->fcntl(outIo, F_SETFL, outIo->fcntl(outIo, F_GETFL, 0) | O_NONBLOCK);
-    return count;
-}
-
-static int tucube_epoll_tls_Ssl_fcntl(struct gaio_Io* io, int command, int argCount, ...) {
-    va_list args;
-    va_start(args, argCount);
-    int returnValue = fcntl(SSL_get_fd((SSL*)io->object.pointer), command, argCount, args);
-    va_end(args);
-    return returnValue;
-}
-
-static int tucube_epoll_tls_Ssl_fstat(struct gaio_Io* io, struct stat* statBuffer) {
-    return fstat(SSL_get_fd((SSL*)io->object.pointer), statBuffer);
-}
-
-static int tucube_epoll_tls_Ssl_fileno(struct gaio_Io* io) {
-    return SSL_get_fd((SSL*)io->object.pointer);
-}
-
-static int tucube_epoll_tls_Ssl_close(struct gaio_Io* io) {
-    SSL_shutdown((SSL*)io->object.pointer); 
-    SSL_shutdown((SSL*)io->object.pointer);
-    return close(SSL_get_fd((SSL*)io->object.pointer));
-}
 
 int tucube_ICLocal_init(struct tucube_Module* module, struct tucube_ClData_List* clDataList, void* args[]) {
 #define TUCUBE_LOCAL_MODULE GENC_CAST(module->generic.pointer, struct tucube_epoll_tls_Module*)
@@ -162,13 +172,7 @@ int tucube_ICLocal_init(struct tucube_Module* module, struct tucube_ClData_List*
     }
     GENC_LIST_APPEND(clDataList, clData);
     TUCUBE_LOCAL_CLDATA->clientIo.object.pointer = TUCUBE_LOCAL_CLDATA->ssl;
-    TUCUBE_LOCAL_CLDATA->clientIo.read = tucube_epoll_tls_Ssl_read;
-    TUCUBE_LOCAL_CLDATA->clientIo.write = tucube_epoll_tls_Ssl_write;
-    TUCUBE_LOCAL_CLDATA->clientIo.sendfile = tucube_epoll_tls_Ssl_sendfile;
-    TUCUBE_LOCAL_CLDATA->clientIo.fcntl = tucube_epoll_tls_Ssl_fcntl;
-    TUCUBE_LOCAL_CLDATA->clientIo.fstat = tucube_epoll_tls_Ssl_fstat;
-    TUCUBE_LOCAL_CLDATA->clientIo.fileno = tucube_epoll_tls_Ssl_fileno;
-    TUCUBE_LOCAL_CLDATA->clientIo.close = tucube_epoll_tls_Ssl_close;
+    TUCUBE_LOCAL_CLDATA->clientIo.callbacks = &(TUCUBE_LOCAL_MODULE->ioCallbacks);
     return TUCUBE_LOCAL_MODULE->tucube_ICLocal_init(GENC_LIST_ELEMENT_NEXT(module), clDataList, (void*[]){&TUCUBE_LOCAL_CLDATA->clientIo, NULL});
 #undef TUCUBE_LOCAL_CLDATA
 #undef TUCUBE_LOCAL_CLIENT_IO
@@ -230,7 +234,7 @@ int tucube_ICLocal_destroy(struct tucube_Module* module, struct tucube_ClData* c
 #define TUCUBE_LOCAL_CLDATA GENC_CAST(clData->generic.pointer, struct tucube_epoll_tls_ClData*)
     TUCUBE_LOCAL_MODULE->tucube_ICLocal_destroy(GENC_LIST_ELEMENT_NEXT(module), GENC_LIST_ELEMENT_NEXT(clData));
     warnx("%s: %u: %s", __FILE__, __LINE__, __FUNCTION__);
-    TUCUBE_LOCAL_CLDATA->clientIo.close(&TUCUBE_LOCAL_CLDATA->clientIo);
+    TUCUBE_LOCAL_CLDATA->clientIo.callbacks->close(&TUCUBE_LOCAL_CLDATA->clientIo);
     SSL_free(TUCUBE_LOCAL_CLDATA->ssl);
 #undef TUCUBE_LOCAL_CLDATA
 #undef TUCUBE_LOCAL_MODULE
