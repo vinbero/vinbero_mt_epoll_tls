@@ -1,0 +1,6 @@
+project(tucube_epoll_tls)
+set(CMAKE_BUILD_TYPE Debug)
+add_library(tucube_epoll_tls SHARED src/tucube_epoll_tls.c)
+set_target_properties(tucube_epoll_tls PROPERTIES PREFIX "")
+target_link_libraries(tucube_epoll_tls ssl)
+install(TARGETS tucube_epoll_tls DESTINATION /usr/local/lib/tucube/)
