@@ -13,7 +13,6 @@
 #include <tucube/tucube_ClData.h>
 #include <libgenc/genc_cast.h>
 #include <libgenc/genc_list.h>
-#include <libgenc/genc_ltostr.h>
 #include <tucube/tucube_IBase.h>
 #include <tucube/tucube_ICLocal.h>
 #include <tucube/tucube_IClService.h>
