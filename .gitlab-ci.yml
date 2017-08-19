@@ -1,7 +1,7 @@
 image: dock0/arch
 
 before_script:
-  - pacman -S --noconfirm cmake gcc make cmocka jansson lua
+  - pacman -S --noconfirm cmake gcc make cmocka jansson lua openssl
   - mkdir deps
   - cd deps
   - BASE_URL=`echo $CI_REPOSITORY_URL | sed "s;\/*$CI_PROJECT_PATH.*;;"`
