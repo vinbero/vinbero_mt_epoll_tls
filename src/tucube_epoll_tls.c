@@ -8,7 +8,6 @@
 #include <sys/sendfile.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <gon_http_parser.h>
 #include <tucube/tucube_Module.h>
 #include <tucube/tucube_ClData.h>
 #include <libgenc/genc_cast.h>
