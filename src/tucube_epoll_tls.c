@@ -101,19 +101,13 @@ int tucube_IBase_init(struct tucube_Module_Config* moduleConfig, struct tucube_M
     char* certificateFile;
     char* privateKeyFile;
 
-    if(json_object_get(json_array_get(moduleConfig->json, 1), "tucube_epoll_tls.certificateFile") != NULL) {
-        if((certificateFile = realpath(json_string_value(json_object_get(json_array_get(moduleConfig->json, 1), "tucube_epoll_tls.certificateFile")), NULL)) == NULL)
-            err(EXIT_FAILURE, "%s: %u: ", __FILE__, __LINE__);
-    } else {
-        errx(EXIT_FAILURE, "%s: %u: Configuration argument tucube_epoll_tls.certificateFile is required", __FILE__, __LINE__);
-    }
+    TUCUBE_MODULE_GET_REQUIRED_CONFIG(moduleConfig, "tucube_epoll_tls.certificateFile", string, &certificateFile);
+    if((certificateFile = realpath(certificateFile, NULL)) == NULL)
+        err(EXIT_FAILURE, "%s: %u: ", __FILE__, __LINE__);
 
-    if(json_object_get(json_array_get(moduleConfig->json, 1), "tucube_epoll_tls.privateKeyFile") != NULL) {
-        if((privateKeyFile = realpath(json_string_value(json_object_get(json_array_get(moduleConfig->json, 1), "tucube_epoll_tls.privateKeyFile")), NULL)) == NULL)
-            err(EXIT_FAILURE, "%s: %u: ", __FILE__, __LINE__);
-    } else {
-        errx(EXIT_FAILURE, "%s: %u: Configuration argument tucube_epoll_tls.privateKeyFile is required", __FILE__, __LINE__);
-    }
+    TUCUBE_MODULE_GET_REQUIRED_CONFIG(moduleConfig, "tucube_epoll_tls.privateKeyFile", string, &privateKeyFile);
+    if((privateKeyFile = realpath(privateKeyFile, NULL)) == NULL)
+        err(EXIT_FAILURE, "%s: %u: ", __FILE__, __LINE__);
  
     if(SSL_CTX_use_certificate_file(TUCUBE_LOCAL_MODULE->sslContext, certificateFile, SSL_FILETYPE_PEM) <= 0) {
         free(certificateFile);
@@ -152,8 +146,6 @@ int tucube_IBase_tlInit(struct tucube_Module* module, struct tucube_Module_Confi
     return TUCUBE_LOCAL_MODULE->tucube_IBase_tlInit(GENC_LIST_ELEMENT_NEXT(module), GENC_LIST_ELEMENT_NEXT(moduleConfig), (void*[]){NULL});
 #undef TUCUBE_LOCAL_MODULE
 }
-
-
 
 int tucube_ICLocal_init(struct tucube_Module* module, struct tucube_ClData_List* clDataList, void* args[]) {
 #define TUCUBE_LOCAL_MODULE GENC_CAST(module->generic.pointer, struct tucube_epoll_tls_Module*)
