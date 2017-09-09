@@ -31,6 +31,10 @@ TUCUBE_IBASE_FUNCTIONS;
 TUCUBE_ICLOCAL_FUNCTIONS;
 TUCUBE_ICLSERVICE_FUNCTIONS;
 
+struct tucube_epoll_tls_TlModule {
+    int state;
+};
+
 struct tucube_epoll_tls_ClData {
     SSL* ssl;
     struct gaio_Io clientIo;
@@ -79,6 +83,7 @@ static int tucube_epoll_tls_Ssl_close(struct gaio_Io* io) {
 int tucube_IBase_init(struct tucube_Module_Config* moduleConfig, struct tucube_Module_List* moduleList, void* args[]) {
 #define TUCUBE_LOCAL_MODULE GENC_CAST(module->generic.pointer, struct tucube_epoll_tls_Module*)
     warnx("%s: %u: %s", __FILE__, __LINE__, __FUNCTION__);
+
     SSL_load_error_strings();	
     ERR_load_crypto_strings();
     OpenSSL_add_ssl_algorithms();
@@ -88,6 +93,8 @@ int tucube_IBase_init(struct tucube_Module_Config* moduleConfig, struct tucube_M
 
     struct tucube_Module* module = malloc(1 * sizeof(struct tucube_Module));
     GENC_LIST_ELEMENT_INIT(module);
+    module->tlModuleKey = malloc(1 * sizeof(pthread_key_t)); 
+    pthread_key_create(module->tlModuleKey, NULL);
     module->generic.pointer = malloc(1 * sizeof(struct tucube_epoll_tls_Module));
 
     TUCUBE_MODULE_DLOPEN(module, moduleConfig);
@@ -143,6 +150,9 @@ int tucube_IBase_init(struct tucube_Module_Config* moduleConfig, struct tucube_M
 int tucube_IBase_tlInit(struct tucube_Module* module, struct tucube_Module_Config* moduleConfig, void* args[]) {
 #define TUCUBE_LOCAL_MODULE GENC_CAST(module->generic.pointer, struct tucube_epoll_tls_Module*)
     warnx("%s: %u: %s", __FILE__, __LINE__, __FUNCTION__);
+    struct tucube_epoll_tls_TlModule* tlModule = malloc(sizeof(struct tucube_epoll_tls_TlModule));
+    tlModule->state = 0;
+    pthread_setspecific(*module->tlModuleKey, tlModule);
     return TUCUBE_LOCAL_MODULE->tucube_IBase_tlInit(GENC_LIST_ELEMENT_NEXT(module), GENC_LIST_ELEMENT_NEXT(moduleConfig), (void*[]){NULL});
 #undef TUCUBE_LOCAL_MODULE
 }
@@ -173,6 +183,7 @@ int tucube_IClService_call(struct tucube_Module* module, struct tucube_ClData* c
 #define TUCUBE_LOCAL_MODULE GENC_CAST(module->generic.pointer, struct tucube_epoll_tls_Module*)
 #define TUCUBE_LOCAL_CLDATA GENC_CAST(clData->generic.pointer, struct tucube_epoll_tls_ClData*)
     warnx("%s: %u: %s", __FILE__, __LINE__, __FUNCTION__);
+    struct tucube_epoll_tls_TlModule* tlModule = pthread_getspecific(*module->tlModuleKey);
 
     if(SSL_is_init_finished(TUCUBE_LOCAL_CLDATA->ssl))
         return TUCUBE_LOCAL_MODULE->tucube_IClService_call(GENC_LIST_ELEMENT_NEXT(module), GENC_LIST_ELEMENT_NEXT(clData), (void*[]){NULL});
