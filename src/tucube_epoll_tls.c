@@ -24,7 +24,7 @@ struct tucube_epoll_tls_Module {
     TUCUBE_ICLOCAL_FUNCTION_POINTERS;
     TUCUBE_ICLSERVICE_FUNCTION_POINTERS;
     SSL_CTX* sslContext;
-    struct gaio_Io_Methods ioMethods;
+    struct gaio_Methods ioMethods;
 };
 
 TUCUBE_IBASE_FUNCTIONS;
