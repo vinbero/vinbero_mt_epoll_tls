@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(tucube_epoll_tls)
+project(tucube_mt_epoll_tls)
 set(CMAKE_BUILD_TYPE Debug)
 add_subdirectory(src)
 add_subdirectory(test)
