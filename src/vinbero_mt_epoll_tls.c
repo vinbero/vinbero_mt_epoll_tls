@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <vinbero_common/vinbero_common_Call.h>
+#include <vinbero_common/vinbero_common_Config.h>
 #include <vinbero_common/vinbero_common_Module.h>
 #include <vinbero_common/vinbero_common_TlModule.h>
 #include <vinbero_common/vinbero_common_ClModule.h>
@@ -52,7 +53,7 @@ static int vinbero_mt_epoll_tls_Ssl_write(struct gaio_Io* io, void* buffer, int 
     return SSL_write((SSL*)io->object.pointer, buffer, writeSize);
 }
 
-static int vinbero_mt_epoll_tls_Ssl_sendfile(struct gaio_Io* outIo, struct gaio_Io* inIo, int* offset, int count) {
+static int vinbero_mt_epoll_tls_Ssl_sendfile(struct gaio_Io* outIo, struct gaio_Io* inIo, off_t* offset, int count) {
     fcntl(outIo->methods->fileno(outIo), F_SETFL, fcntl(outIo->methods->fileno(outIo), F_GETFL, 0) & ~O_NONBLOCK);
     char* buffer = malloc(count);
     inIo->methods->read(inIo, buffer, count);
@@ -98,13 +99,13 @@ int vinbero_interface_MODULE_init(struct vinbero_common_Module* module) {
     char* certificateFile;
     char* privateKeyFile;
 
-    vinbero_common_Config_getRequiredString(module->config, module, "vinbero_mt_epoll_tls.certificateFile", &certificateFile);
+    vinbero_common_Config_getRequiredString(module->config, module, "vinbero_mt_epoll_tls.certificateFile", (const char**)&certificateFile);
     if((certificateFile = realpath(certificateFile, NULL)) == NULL) {
         VINBERO_COMMON_LOG_ERROR("Wrong certificate file path");
         return VINBERO_COMMON_ERROR_INVALID_CONFIG;
     }
 
-    vinbero_common_Config_getRequiredString(module->config, module, "vinbero_mt_epoll_tls.privateKeyFile", &privateKeyFile);
+    vinbero_common_Config_getRequiredString(module->config, module, "vinbero_mt_epoll_tls.privateKeyFile", (const char**)&privateKeyFile);
     if((privateKeyFile = realpath(privateKeyFile, NULL)) == NULL) {
         VINBERO_COMMON_LOG_ERROR("Wrong private key file path");
         return VINBERO_COMMON_ERROR_INVALID_CONFIG;
