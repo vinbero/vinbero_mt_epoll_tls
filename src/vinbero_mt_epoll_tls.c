@@ -24,6 +24,7 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <gaio.h>
+#include "vinbero_mt_epoll_tls_Version.h"
 
 struct vinbero_mt_epoll_tls_Module {
     VINBERO_INTERFACE_CLOCAL_FUNCTION_POINTERS;
@@ -79,23 +80,21 @@ static int vinbero_mt_epoll_tls_Ssl_close(struct gaio_Io* io) {
 
 int vinbero_interface_MODULE_init(struct vinbero_common_Module* module) {
     VINBERO_COMMON_LOG_TRACE2();
+    vinbero_common_Module_init(module, "vinbero_mt_epoll_tls", VINBERO_MT_EPOLL_TLS_VERSION, true);
+    module->localModule.pointer = malloc(1 * sizeof(struct vinbero_mt_epoll_tls_Module));
     struct vinbero_mt_epoll_tls_Module* localModule = module->localModule.pointer;
-
     SSL_load_error_strings();    
     ERR_load_crypto_strings();
     OpenSSL_add_ssl_algorithms();
 
-    module->localModule.pointer = malloc(1 * sizeof(struct vinbero_mt_epoll_tls_Module));
 
 /*
     VINBERO_INTERFACE_BASIC_DLSYM(module, struct vinbero_mt_epoll_tls_Module);
     VINBERO_INTERFACE_CLOCAL_DLSYM(module, struct vinbero_mt_epoll_tls_Module);
     VINBERO_INTERFACE_CLSERVICE_DLSYM(module, struct vinbero_mt_epoll_tls_Module);
 */
-
     localModule->sslContext = SSL_CTX_new(SSLv23_server_method());
     SSL_CTX_set_ecdh_auto(localModule->sslContext, 1);
-
     char* certificateFile;
     char* privateKeyFile;
 
@@ -137,6 +136,7 @@ int vinbero_interface_MODULE_init(struct vinbero_common_Module* module) {
 
 int vinbero_interface_TLOCAL_init(struct vinbero_common_TlModule* tlModule) {
     VINBERO_COMMON_LOG_TRACE2();
+    tlModule->localTlModule.pointer = malloc(sizeof(struct vinbero_mt_epoll_tls_TlModule));
     struct vinbero_mt_epoll_tls_TlModule* localTlModule = tlModule->localTlModule.pointer;
     localTlModule->state = 0;
     return VINBERO_COMMON_STATUS_SUCCESS;
@@ -146,10 +146,10 @@ int vinbero_interface_CLOCAL_init(struct vinbero_common_ClModule* clModule) {
     VINBERO_COMMON_LOG_TRACE2();
     int ret;
     struct vinbero_common_Module* module = clModule->tlModule->module;
+    clModule->localClModule.pointer = malloc(1 * sizeof(struct vinbero_mt_epoll_tls_ClModule));
     struct vinbero_mt_epoll_tls_ClModule* localClModule = clModule->localClModule.pointer;
     struct vinbero_mt_epoll_tls_Module* localModule = clModule->tlModule->module->localModule.pointer;
     struct gaio_Io* localClientIo = clModule->arg;
-    clModule->localClModule.pointer = malloc(1 * sizeof(struct vinbero_mt_epoll_tls_ClModule));
     localClModule->ssl = SSL_new(GENC_CAST(module->localModule.pointer, struct vinbero_mt_epoll_tls_Module*)->sslContext);
     if(SSL_set_fd(localClModule->ssl, dup(localClientIo->object.integer)) != 1) {
         VINBERO_COMMON_LOG_ERROR("SSL_set_fd() failed");
@@ -220,6 +220,14 @@ int vinbero_interface_CLSERVICE_call(struct vinbero_common_ClModule* clModule) {
     }
 }
 
+int vinbero_interface_TLOCAL_rInit(struct vinbero_common_TlModule* tlModule) {
+    return VINBERO_COMMON_STATUS_SUCCESS;
+}
+
+int vinbero_interface_MODULE_rInit(struct vinbero_common_Module* module) {
+    return VINBERO_COMMON_STATUS_SUCCESS;
+}
+
 int vinbero_interface_CLOCAL_destroy(struct vinbero_common_ClModule* clModule) {
     VINBERO_COMMON_LOG_TRACE2();
     struct vinbero_mt_epoll_tls_ClModule* localClModule = clModule->localClModule.pointer;
@@ -229,6 +237,17 @@ int vinbero_interface_CLOCAL_destroy(struct vinbero_common_ClModule* clModule) {
 
 int vinbero_interface_TLOCAL_destroy(struct vinbero_common_TlModule* tlModule) {
     VINBERO_COMMON_LOG_TRACE2();
+    return VINBERO_COMMON_STATUS_SUCCESS;
+}
+
+int vinbero_interface_TLOCAL_rDestroy(struct vinbero_common_TlModule* tlModule) {
+    VINBERO_COMMON_LOG_TRACE2();
+    return VINBERO_COMMON_STATUS_SUCCESS;
+}
+
+
+int vinbero_interface_MODULE_destroy(struct vinbero_common_Module* module) {
+    return VINBERO_COMMON_STATUS_SUCCESS;
 }
 
 int vinbero_interface_MODULE_rDestroy(struct vinbero_common_Module* module) {
