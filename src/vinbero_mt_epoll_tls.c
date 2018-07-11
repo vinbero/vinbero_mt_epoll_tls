@@ -188,10 +188,10 @@ int vinbero_interface_CLSERVICE_call(struct vinbero_common_ClModule* clModule) {
                 VINBERO_COMMON_LOG_ERROR("SSL_ERROR_NONE");
                 break;
             case SSL_ERROR_WANT_WRITE:
-                VINBERO_COMMON_LOG_ERROR("SSL_ERROR_WANT_WRITE");
+                VINBERO_COMMON_LOG_DEBUG("SSL_ERROR_WANT_WRITE");
                 return VINBERO_COMMON_STATUS_AGAIN;
             case SSL_ERROR_WANT_READ:
-                VINBERO_COMMON_LOG_ERROR("SSL_ERROR_WANT_READ");
+                VINBERO_COMMON_LOG_DEBUG("SSL_ERROR_WANT_READ");
                 return VINBERO_COMMON_STATUS_AGAIN;
             case SSL_ERROR_ZERO_RETURN:
                 VINBERO_COMMON_LOG_ERROR("SSL_ERROR_ZERO_RETURN");
