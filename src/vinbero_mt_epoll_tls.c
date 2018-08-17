@@ -160,10 +160,12 @@ int vinbero_interface_CLOCAL_init(struct vinbero_common_ClModule* clModule) {
     struct vinbero_common_Module* childModule = &GENC_TREE_NODE_GET_CHILD(clModule->tlModule->module, 0);
     struct vinbero_common_ClModule* childClModule = &GENC_TREE_NODE_GET_CHILD(clModule, 0);
     childClModule->arg = &localClModule->clientIo;
+/*
     VINBERO_COMMON_CALL(CLOCAL, init, childModule, &ret, childClModule);
     if(ret < VINBERO_COMMON_STATUS_SUCCESS)
         return ret;
     return VINBERO_COMMON_STATUS_SUCCESS;
+*/
 }
 
 int vinbero_interface_CLSERVICE_call(struct vinbero_common_ClModule* clModule) {
@@ -174,7 +176,6 @@ int vinbero_interface_CLSERVICE_call(struct vinbero_common_ClModule* clModule) {
     struct vinbero_mt_epoll_tls_TlModule* tlModule = clModule->tlModule->localTlModule.pointer;
     struct vinbero_mt_epoll_tls_ClModule* localClModule = clModule->localClModule.pointer;
     struct vinbero_common_ClModule* childClModule = &GENC_TREE_NODE_GET_CHILD(clModule, 0);
-
 
     if(SSL_is_init_finished(localClModule->ssl)) {
         VINBERO_COMMON_CALL(CLSERVICE, call, childModule, &ret, childClModule);
