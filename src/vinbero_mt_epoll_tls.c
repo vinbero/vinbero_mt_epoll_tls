@@ -159,7 +159,8 @@ int vinbero_interface_CLOCAL_init(struct vinbero_common_ClModule* clModule) {
     localClModule->clientIo.methods = &(localModule->ioMethods);
     struct vinbero_common_Module* childModule = &GENC_TREE_NODE_GET_CHILD(clModule->tlModule->module, 0);
     struct vinbero_common_ClModule* childClModule = &GENC_TREE_NODE_GET_CHILD(clModule, 0);
-    childClModule->arg = &localClModule->clientIo;
+    clModule->arg = &localClModule->clientIo;
+//    childClModule->arg = &localClModule->clientIo;
 /*
     VINBERO_COMMON_CALL(CLOCAL, init, childModule, &ret, childClModule);
     if(ret < VINBERO_COMMON_STATUS_SUCCESS)
