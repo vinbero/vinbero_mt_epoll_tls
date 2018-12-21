@@ -256,7 +256,6 @@ int vinbero_interface_MODULE_rDestroy(struct vinbero_common_Module* module) {
     VINBERO_COMMON_LOG_TRACE2();
     struct vinbero_mt_epoll_tls_Module* localModule = module->localModule.pointer;
     free(module->localModule.pointer);
-    free(module);
     EVP_cleanup();
     return VINBERO_COMMON_STATUS_SUCCESS;
 }
