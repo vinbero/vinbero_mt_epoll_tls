@@ -98,13 +98,15 @@ int vinbero_interface_MODULE_init(struct vinbero_common_Module* module) {
     char* certificateFile;
     char* privateKeyFile;
 
-    vinbero_common_Config_getRequiredString(module->config, module, "vinbero_mt_epoll_tls.certificateFile", (const char**)&certificateFile);
+    if(vinbero_common_Config_getRequiredConstring(module->config, module, "vinbero_mt_epoll_tls.certificateFile", (const char**)&certificateFile) == false)
+        return VINBERO_COMMON_ERROR_INVALID_CONFIG;
     if((certificateFile = realpath(certificateFile, NULL)) == NULL) {
         VINBERO_COMMON_LOG_ERROR("Wrong certificate file path");
         return VINBERO_COMMON_ERROR_INVALID_CONFIG;
     }
 
-    vinbero_common_Config_getRequiredString(module->config, module, "vinbero_mt_epoll_tls.privateKeyFile", (const char**)&privateKeyFile);
+    if(vinbero_common_Config_getRequiredConstring(module->config, module, "vinbero_mt_epoll_tls.privateKeyFile", (const char**)&privateKeyFile) == false)
+        return VINBERO_COMMON_ERROR_INVALID_CONFIG;
     if((privateKeyFile = realpath(privateKeyFile, NULL)) == NULL) {
         VINBERO_COMMON_LOG_ERROR("Wrong private key file path");
         return VINBERO_COMMON_ERROR_INVALID_CONFIG;
