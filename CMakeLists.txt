@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(vinbero_mt_epoll_tls C)
-set(vinbero_mt_epoll_tls_version "0.1.3")
-set(vinbero_mt_epoll_tls_soversion "0.1")
+set(vinbero_mt_epoll_tls_version "0.2.0")
+set(vinbero_mt_epoll_tls_soversion "0.2")
 
 if(CMAKE_VERSION VERSION_LESS "3.1")
   if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
