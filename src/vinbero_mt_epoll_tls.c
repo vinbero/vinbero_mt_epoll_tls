@@ -16,7 +16,7 @@
 #include <vinbero_common/vinbero_common_Status.h>
 #include <vinbero_common/vinbero_common_Error.h>
 #include <vinbero_common/vinbero_common_Log.h>
-#include <libgenc/genc_cast.h>
+#include <libgenc/genc_Cast.h>
 #include <libgenc/genc_Tree.h>
 #include <vinbero/vinbero_interface_MODULE.h>
 #include <vinbero/vinbero_interface_CLOCAL.h>
