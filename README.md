@@ -4,4 +4,4 @@
 [![Build Status](https://travis-ci.org/vinbero/vinbero_mt_epoll_tls.svg?branch=master)](https://travis-ci.org/vinbero/vinbero_mt_epoll_tls)
 [![license](http://img.shields.io/github/license/vinbero/vinbero_mt_epoll_tls.svg)](https://raw.githubusercontent.com/vinbero/vinbero_mt_epoll_tls/master/LICENSE)
 
-TLS module for vinbero_tcp_mt_epoll
+TLS module for vinbero_strm_mt_epoll
