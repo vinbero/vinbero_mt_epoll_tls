@@ -36,14 +36,14 @@ VINBERO_COM_MODULE_META_INIT(
     "TLOCAL,CLOCAL,CLSERVICE"
 );
 
-VINBERO_IFACE_MODULE_FUNCTIONS;
-VINBERO_IFACE_TLOCAL_FUNCTIONS;
-VINBERO_IFACE_CLOCAL_FUNCTIONS;
-VINBERO_IFACE_CLSERVICE_FUNCTIONS;
+VINBERO_IFACE_MODULE_FUNCS;
+VINBERO_IFACE_TLOCAL_FUNCS;
+VINBERO_IFACE_CLOCAL_FUNCS;
+VINBERO_IFACE_CLSERVICE_FUNCS;
 
 struct vinbero_mt_epoll_tls_Module {
-    VINBERO_IFACE_CLOCAL_FUNCTION_POINTERS;
-    VINBERO_IFACE_CLSERVICE_FUNCTION_POINTERS;
+    VINBERO_IFACE_CLOCAL_FUNC_PTRS;
+    VINBERO_IFACE_CLSERVICE_FUNC_PTRS;
     SSL_CTX* sslContext;
     struct gaio_Methods ioMethods;
 };
@@ -163,19 +163,19 @@ int vinbero_iface_CLOCAL_init(struct vinbero_com_ClModule* clModule) {
     }
     localClModule->clientIo.object.pointer = localClModule->ssl;
     localClModule->clientIo.methods = &(localModule->ioMethods);
-    struct vinbero_com_Module* childModule = GENC_TREE_NODE_GET_CHILD(clModule->tlModule->module, 0);
-    struct vinbero_com_ClModule* childClModule = GENC_TREE_NODE_GET_CHILD(clModule, 0);
+    struct vinbero_com_Module* childModule = GENC_TREE_NODE_RAW_GET(clModule->tlModule->module, 0);
+    struct vinbero_com_ClModule* childClModule = GENC_TREE_NODE_RAW_GET(clModule, 0);
     clModule->arg = &localClModule->clientIo;
 }
 
 int vinbero_iface_CLSERVICE_call(struct vinbero_com_ClModule* clModule) {
     VINBERO_COM_LOG_TRACE2();
     int ret;
-    struct vinbero_com_Module* childModule = GENC_TREE_NODE_GET_CHILD(clModule->tlModule->module, 0);
+    struct vinbero_com_Module* childModule = GENC_TREE_NODE_RAW_GET(clModule->tlModule->module, 0);
     struct vinbero_mt_epoll_tls_Module* localModule = clModule->tlModule->module->localModule.pointer;
     struct vinbero_mt_epoll_tls_TlModule* tlModule = clModule->tlModule->localTlModule.pointer;
     struct vinbero_mt_epoll_tls_ClModule* localClModule = clModule->localClModule.pointer;
-    struct vinbero_com_ClModule* childClModule = GENC_TREE_NODE_GET_CHILD(clModule, 0);
+    struct vinbero_com_ClModule* childClModule = GENC_TREE_NODE_RAW_GET(clModule, 0);
 
     if(SSL_is_init_finished(localClModule->ssl)) {
         VINBERO_COM_CALL(CLSERVICE, call, childModule, &ret, childClModule);
