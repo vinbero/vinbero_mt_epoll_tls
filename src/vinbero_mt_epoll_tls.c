@@ -19,6 +19,7 @@
 #include <libgenc/genc_Cast.h>
 #include <libgenc/genc_Tree.h>
 #include <vinbero/vinbero_iface_MODULE.h>
+#include <vinbero/vinbero_iface_TLOCAL.h>
 #include <vinbero/vinbero_iface_CLOCAL.h>
 #include <vinbero/vinbero_iface_CLSERVICE.h>
 #include <openssl/ssl.h>
@@ -26,16 +27,26 @@
 #include <gaio.h>
 #include "vinbero_mt_epoll_tls_Version.h"
 
+VINBERO_COM_MODULE_META_INIT(
+    "vinbero_mt_epoll_tls",
+    VINBERO_MT_EPOLL_TLS_VERSION_MAJOR,
+    VINBERO_MT_EPOLL_TLS_VERSION_MINOR,
+    VINBERO_MT_EPOLL_TLS_VERSION_PATCH,
+    "TLOCAL,CLOCAL,CLSERVICE",
+    "TLOCAL,CLOCAL,CLSERVICE"
+);
+
+VINBERO_IFACE_MODULE_FUNCTIONS;
+VINBERO_IFACE_TLOCAL_FUNCTIONS;
+VINBERO_IFACE_CLOCAL_FUNCTIONS;
+VINBERO_IFACE_CLSERVICE_FUNCTIONS;
+
 struct vinbero_mt_epoll_tls_Module {
     VINBERO_IFACE_CLOCAL_FUNCTION_POINTERS;
     VINBERO_IFACE_CLSERVICE_FUNCTION_POINTERS;
     SSL_CTX* sslContext;
     struct gaio_Methods ioMethods;
 };
-
-VINBERO_IFACE_MODULE_FUNCTIONS;
-VINBERO_IFACE_CLOCAL_FUNCTIONS;
-VINBERO_IFACE_CLSERVICE_FUNCTIONS;
 
 struct vinbero_mt_epoll_tls_TlModule {
     int state;
@@ -80,18 +91,12 @@ static int vinbero_mt_epoll_tls_Ssl_close(struct gaio_Io* io) {
 
 int vinbero_iface_MODULE_init(struct vinbero_com_Module* module) {
     VINBERO_COM_LOG_TRACE2();
-    vinbero_com_Module_init(module, "vinbero_mt_epoll_tls", VINBERO_MT_EPOLL_TLS_VERSION, true);
     module->localModule.pointer = malloc(1 * sizeof(struct vinbero_mt_epoll_tls_Module));
     struct vinbero_mt_epoll_tls_Module* localModule = module->localModule.pointer;
     SSL_load_error_strings();    
     ERR_load_crypto_strings();
     OpenSSL_add_ssl_algorithms();
 
-/*
-    VINBERO_IFACE_BASIC_DLSYM(module, struct vinbero_mt_epoll_tls_Module);
-    VINBERO_IFACE_CLOCAL_DLSYM(module, struct vinbero_mt_epoll_tls_Module);
-    VINBERO_IFACE_CLSERVICE_DLSYM(module, struct vinbero_mt_epoll_tls_Module);
-*/
     localModule->sslContext = SSL_CTX_new(SSLv23_server_method());
     SSL_CTX_set_ecdh_auto(localModule->sslContext, 1);
     char* certificateFile;
@@ -161,13 +166,6 @@ int vinbero_iface_CLOCAL_init(struct vinbero_com_ClModule* clModule) {
     struct vinbero_com_Module* childModule = GENC_TREE_NODE_GET_CHILD(clModule->tlModule->module, 0);
     struct vinbero_com_ClModule* childClModule = GENC_TREE_NODE_GET_CHILD(clModule, 0);
     clModule->arg = &localClModule->clientIo;
-//    childClModule->arg = &localClModule->clientIo;
-/*
-    VINBERO_COM_CALL(CLOCAL, init, childModule, &ret, childClModule);
-    if(ret < VINBERO_COM_STATUS_SUCCESS)
-        return ret;
-    return VINBERO_COM_STATUS_SUCCESS;
-*/
 }
 
 int vinbero_iface_CLSERVICE_call(struct vinbero_com_ClModule* clModule) {

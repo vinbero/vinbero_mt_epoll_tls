@@ -2,8 +2,8 @@ add_library(vinbero_mt_epoll_tls MODULE vinbero_mt_epoll_tls.c)
 set_target_properties(vinbero_mt_epoll_tls
                       PROPERTIES PREFIX ""
                                  PUBLIC_HEADER ""
-                                 VERSION ${vinbero_mt_epoll_tls_version}
-                                 SOVERSION ${vinbero_mt_epoll_tls_soversion})
+                                 VERSION ${version}
+                                 SOVERSION ${soversion})
 
 find_library(fastdl libfastdl.so REQUIRED)
 find_library(gaio libgaio.so.0.3 REQUIRED)
