@@ -1,0 +1,131 @@
+dist: trusty
+sudo: required
+language: c
+compiler:
+  - gcc
+
+branches:
+  only:
+    - master
+    - dev
+before_install:
+  - pwd
+  - git clone git://git.cryptomilk.org/projects/cmocka.git 
+  - cd cmocka
+  - mkdir build
+  - cd build
+  - cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ..
+  - cd ../../
+
+  - pwd
+  - git clone https://github.com/akheron/jansson
+  - cd jansson
+  - autoreconf -i
+  - ./configure --prefix=/usr
+  - cd ../
+
+  - pwd
+  - git clone https://github.com/nodejs/http-parser
+
+  - pwd
+  - git clone -b $TRAVIS_BRANCH https://github.com/gonapps-org/libgenc
+  - cd libgenc
+  - mkdir build
+  - cd build
+  - cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ..
+  - cd ../../
+
+  - pwd
+  - git clone -b $TRAVIS_BRANCH https://github.com/gonapps-org/libgaio
+  - cd libgaio
+  - mkdir build
+  - cd build
+  - cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ..
+  - cd ../../
+
+  - pwd
+  - git clone -b $TRAVIS_BRANCH https://github.com/gonapps-org/libfastdl
+  - cd libfastdl
+  - mkdir build
+  - cd build
+  - cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ..
+  - cd ../../
+
+  - pwd
+  - git clone -b $TRAVIS_BRANCH https://github.com/vinbero/vinbero-ifaces
+  - cd vinbero-ifaces
+  - mkdir build
+  - cd build
+  - cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ..
+  - cd ../../
+
+  - pwd
+  - git clone -b $TRAVIS_BRANCH https://github.com/vinbero/libvinbero_com
+  - cd libvinbero_com
+  - mkdir build
+  - cd build
+  - cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ..
+  - cd ../../
+
+
+install:
+  - sudo apt-get install -y uthash-dev
+
+  - pwd
+  - cd cmocka/build
+  - make
+  - sudo make install
+  - cd ../../
+
+  - pwd
+  - cd jansson
+  - make
+  - make check
+  - sudo make install
+  - cd ../
+
+  - pwd
+  - cd http-parser
+  - make
+  - PREFIX=/usr sudo make install
+  - cd ../
+
+  - pwd
+  - cd libgenc/build
+  - make
+  - sudo make install
+  - cd ../../
+
+  - pwd
+  - cd libgaio/build
+  - make
+  - sudo make install
+  - cd ../../
+
+  - pwd
+  - cd libfastdl/build
+  - make
+  - sudo make install
+  - cd ../../
+
+  - pwd
+  - cd vinbero-ifaces/build
+  - make
+  - sudo make install
+  - cd ../../
+
+  - pwd
+  - cd libvinbero_com/build
+  - make
+  - sudo make install
+  - cd ../../
+
+before_script:
+  - cmake -version
+  - make --version 
+  - gcc --version
+  - mkdir build
+  - cd build
+  - cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ..
+
+script: make && ctest --verbose
