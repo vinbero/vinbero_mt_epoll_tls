@@ -1,21 +1,42 @@
-add_library(vinbero_mt_epoll_tls MODULE vinbero_mt_epoll_tls.c)
-set_target_properties(vinbero_mt_epoll_tls
-                      PROPERTIES PREFIX ""
-                                 PUBLIC_HEADER ""
-                                 VERSION ${version}
-                                 SOVERSION ${soversion})
+add_library(vinbero_mt_epoll_tls MODULE)
+
+target_sources(
+    vinbero_mt_epoll_tls
+    PRIVATE
+    vinbero_mt_epoll_tls.c
+)
+
+target_compile_options(
+    vinbero_mt_epoll_tls
+    PRIVATE
+    -Wall
+)
+
+set_target_properties(
+    vinbero_mt_epoll_tls
+    PROPERTIES
+    C_STANDARD 11
+    PREFIX ""
+    PUBLIC_HEADER ""
+    VERSION ${version}
+    SOVERSION ${soversion}
+)
 
 find_library(fastdl libfastdl.so REQUIRED)
 find_library(gaio libgaio.so.0.3 REQUIRED)
-find_library(vinbero_com libvinbero_com.so REQUIRED)
+find_package(vinbero_com REQUIRED)
 
-target_link_libraries(vinbero_mt_epoll_tls
-                      ${vinbero_com}
-                      ${fastdl}
-                      ${gaio}
-                      crypto
-                      ssl)
+target_link_libraries(
+    vinbero_mt_epoll_tls
+    vinbero_com::vinbero_com
+    ${fastdl}
+    ${gaio}
+    crypto
+    ssl
+)
 
-install(TARGETS vinbero_mt_epoll_tls
-        LIBRARY DESTINATION lib/vinbero
-        PUBLIC_HEADER DESTINATION include/vinbero)
+install(
+    TARGETS vinbero_mt_epoll_tls
+    LIBRARY DESTINATION lib/vinbero
+    PUBLIC_HEADER DESTINATION include/vinbero
+)
