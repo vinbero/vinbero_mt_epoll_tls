@@ -78,7 +78,7 @@ static int vinbero_mt_epoll_tls_Ssl_sendfile(struct gaio_Io* outIo, struct gaio_
 }
 
 static int vinbero_mt_epoll_tls_Ssl_fileno(struct gaio_Io* io) {
-    SSL_get_fd((SSL*)io->object.pointer);
+    return SSL_get_fd((SSL*)io->object.pointer);
 }
 
 static int vinbero_mt_epoll_tls_Ssl_fstat(struct gaio_Io* io, struct stat* statBuffer) {
@@ -152,7 +152,6 @@ int vinbero_iface_TLOCAL_init(struct vinbero_com_TlModule* tlModule) {
 
 int vinbero_iface_CLOCAL_init(struct vinbero_com_ClModule* clModule) {
     VINBERO_COM_LOG_TRACE2();
-    int ret;
     struct vinbero_com_Module* module = clModule->tlModule->module;
     clModule->localClModule.pointer = malloc(1 * sizeof(struct vinbero_mt_epoll_tls_ClModule));
     struct vinbero_mt_epoll_tls_ClModule* localClModule = clModule->localClModule.pointer;
@@ -165,17 +164,14 @@ int vinbero_iface_CLOCAL_init(struct vinbero_com_ClModule* clModule) {
     }
     localClModule->clientIo.object.pointer = localClModule->ssl;
     localClModule->clientIo.methods = &(localModule->ioMethods);
-    struct vinbero_com_Module* childModule = GENC_TREE_NODE_RAW_GET(clModule->tlModule->module, 0);
-    struct vinbero_com_ClModule* childClModule = GENC_TREE_NODE_RAW_GET(clModule, 0);
     clModule->arg = &localClModule->clientIo;
+    return VINBERO_COM_STATUS_SUCCESS;
 }
 
 int vinbero_iface_CLSERVICE_call(struct vinbero_com_ClModule* clModule) {
     VINBERO_COM_LOG_TRACE2();
     int ret;
     struct vinbero_com_Module* childModule = GENC_TREE_NODE_RAW_GET(clModule->tlModule->module, 0);
-    struct vinbero_mt_epoll_tls_Module* localModule = clModule->tlModule->module->localModule.pointer;
-    struct vinbero_mt_epoll_tls_TlModule* tlModule = clModule->tlModule->localTlModule.pointer;
     struct vinbero_mt_epoll_tls_ClModule* localClModule = clModule->localClModule.pointer;
     struct vinbero_com_ClModule* childClModule = GENC_TREE_NODE_RAW_GET(clModule, 0);
 
@@ -221,6 +217,7 @@ int vinbero_iface_CLSERVICE_call(struct vinbero_com_ClModule* clModule) {
         VINBERO_COM_LOG_ERROR("SSL_accept() failed");
         return VINBERO_COM_ERROR_UNKNOWN;
     }
+    return VINBERO_COM_STATUS_SUCCESS;
 }
 
 int vinbero_iface_TLOCAL_rInit(struct vinbero_com_TlModule* tlModule) {
@@ -236,6 +233,7 @@ int vinbero_iface_CLOCAL_destroy(struct vinbero_com_ClModule* clModule) {
     struct vinbero_mt_epoll_tls_ClModule* localClModule = clModule->localClModule.pointer;
     localClModule->clientIo.methods->close(&localClModule->clientIo);
     SSL_free(localClModule->ssl);
+    return VINBERO_COM_STATUS_SUCCESS;
 }
 
 int vinbero_iface_TLOCAL_destroy(struct vinbero_com_TlModule* tlModule) {
@@ -255,7 +253,6 @@ int vinbero_iface_MODULE_destroy(struct vinbero_com_Module* module) {
 
 int vinbero_iface_MODULE_rDestroy(struct vinbero_com_Module* module) {
     VINBERO_COM_LOG_TRACE2();
-    struct vinbero_mt_epoll_tls_Module* localModule = module->localModule.pointer;
     free(module->localModule.pointer);
     EVP_cleanup();
     return VINBERO_COM_STATUS_SUCCESS;

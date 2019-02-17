@@ -22,15 +22,15 @@ set_target_properties(
     SOVERSION ${soversion}
 )
 
-find_library(fastdl libfastdl.so REQUIRED)
-find_library(gaio libgaio.so.0.3 REQUIRED)
+find_package(fastdl REQUIRED)
+find_package(gaio REQUIRED)
 find_package(vinbero_com REQUIRED)
 
 target_link_libraries(
     vinbero_mt_epoll_tls
     vinbero_com::vinbero_com
-    ${fastdl}
-    ${gaio}
+    fastdl::fastdl
+    gaio::gaio
     crypto
     ssl
 )
