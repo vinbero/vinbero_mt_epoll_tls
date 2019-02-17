@@ -25,7 +25,7 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <gaio.h>
-#include "vinbero_mt_epoll_tls_Version.h"
+#include "config.h"
 
 VINBERO_COM_MODULE_META_NAME("vinbero_mt_epoll_tls")
 VINBERO_COM_MODULE_META_LICENSE("MPL-2.0")

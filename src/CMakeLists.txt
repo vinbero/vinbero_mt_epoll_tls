@@ -1,3 +1,7 @@
+find_package(fastdl REQUIRED)
+find_package(gaio REQUIRED)
+find_package(vinbero_com REQUIRED)
+
 add_library(vinbero_mt_epoll_tls MODULE)
 
 target_sources(
@@ -22,9 +26,11 @@ set_target_properties(
     SOVERSION ${soversion}
 )
 
-find_package(fastdl REQUIRED)
-find_package(gaio REQUIRED)
-find_package(vinbero_com REQUIRED)
+target_include_directories(
+    vinbero_mt_epoll_tls
+    PRIVATE
+    ${PROJECT_BINARY_DIR}
+)
 
 target_link_libraries(
     vinbero_mt_epoll_tls
@@ -33,6 +39,12 @@ target_link_libraries(
     gaio::gaio
     crypto
     ssl
+)
+
+configure_file(
+    "${PROJECT_SOURCE_DIR}/src/config.h.in"
+    "${PROJECT_BINARY_DIR}/config.h"
+    @ONLY
 )
 
 install(
