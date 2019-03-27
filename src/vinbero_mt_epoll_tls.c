@@ -18,10 +18,10 @@
 #include <vinbero_com/vinbero_com_Log.h>
 #include <libgenc/genc_Cast.h>
 #include <libgenc/genc_Tree.h>
-#include <vinbero/vinbero_iface_MODULE.h>
-#include <vinbero/vinbero_iface_TLOCAL.h>
-#include <vinbero/vinbero_iface_CLOCAL.h>
-#include <vinbero/vinbero_iface_CLSERVICE.h>
+#include <vinbero_iface_MODULE/vinbero_iface_MODULE.h>
+#include <vinbero_iface_TLOCAL/vinbero_iface_TLOCAL.h>
+#include <vinbero_iface_CLOCAL/vinbero_iface_CLOCAL.h>
+#include <vinbero_iface_CLSERVICE/vinbero_iface_CLSERVICE.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <gaio.h>
